@@ -1,0 +1,35 @@
+---
+- name: start AWX job
+  hosts: localhost
+  gather_facts: false
+  vars:
+    #ansible_python_interpreter: "/usr/bin/python3"
+    awx_fqdn: http://ec2-3-87-12-134.compute-1.amazonaws.com
+    awx_local_user: admin
+    job_template_name: linux-install-packages
+    password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          63616233373934373930316262343166373465316466336337623539643335393632623462646662
+          3137643163333137663763636664326636633866326536370a623338303836323235353466373532
+          30323666386466303932353330616337633763363536633530386664623534323065666162626639
+          6361636565666533610a623661666331333738343837383965326238356633633338656465346265
+          63376434393364326632666335616464323033396336326562356631326130623566
+
+  tasks:
+  - name: Launch a job with inventory and credential
+    tower_job_launch:
+      job_template: "{{ job_template_name }}"
+      tower_host: "{{ awx_fqdn }}"
+      tower_username: "{{ awx_local_user }}"
+      tower_password: "{{ password }}"
+      validate_certs: no
+    register: job
+
+  - name: Wait for job max 120s
+    tower_job_wait:
+      job_id: "{{ job.id }}"
+      timeout: 120
+      tower_host: "{{ awx_fqdn }}"
+      tower_username: "{{ awx_local_user }}"
+      tower_password: "{{ password }}"
+      validate_certs: no
